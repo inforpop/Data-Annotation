@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>🏷️ Data Annotation — Clássica x Quântica | Pedro Paulo Ribeiro</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="brand">
+      <h1>🏷️ Data Annotation em Python</h1>
+      <p class="subtitle">Dashboard de rotulagem assistida — Computação Clássica &amp; Computação Quântica · Flask</p>
+      <div class="contacts">
+        <strong>📞 Meus Contatos:</strong>
+        <a href="{{ contacts.site[1] }}" target="_blank" rel="noopener">{{ contacts.site[0] }}</a>
+        <span>📱 WhatsApp: <a href="{{ contacts.whatsapp[1] }}" target="_blank" rel="noopener">{{ contacts.whatsapp[0] }}</a></span>
+        <span>✉️ Email: <a href="{{ contacts.email[1] }}">{{ contacts.email[0] }}</a></span>
+        <span>🔗 LinkedIn: <a href="{{ contacts.linkedin[1] }}" target="_blank" rel="noopener">{{ contacts.linkedin[0] }}</a></span>
+      </div>
+    </div>
+    <figure class="attachment">
+      <img src="{{ url_for('static', filename='img/anexo.png') }}"
+           alt="Qualidade, Agilidade e Simplicidade — Diploma de Graduação em Ciência de Dados (UNINASSAU) de Pedro Paulo Ribeiro">
+      <figcaption>Qualidade · Agilidade · Simplicidade — Bacharel em Ciência de Dados</figcaption>
+    </figure>
+  </div>
+</header>
+
+<main>
+  <div class="toolbar">
+    <label>👤 Anotador(a):
+      <input id="annotator" type="text" maxlength="40" value="Pedro">
+    </label>
+    <span class="hint">Atalhos: teclas <kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> escolhem o rótulo · <kbd>Enter</kbd> aceita a sugestão do modelo</span>
+  </div>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="classical" role="tab">💻 Computação Clássica</button>
+    <button class="tab" data-tab="quantum" role="tab">⚛️ Computação Quântica</button>
+  </nav>
+
+  {% for dom in ['classical', 'quantum'] %}
+  <section class="panel{% if loop.first %} active{% endif %}" id="panel-{{ dom }}" data-domain="{{ dom }}">
+    <div class="intro">
+      {% if dom == 'classical' %}
+        <p><b>Tarefa:</b> rotular o <b>sentimento</b> de {{ totals[dom] }} textos em português.
+        Um classificador por léxico faz a <i>pré-anotação</i>; você confirma ou corrige
+        (<i>model-assisted labeling</i>).</p>
+      {% else %}
+        <p><b>Tarefa:</b> rotular o <b>estado final</b> de {{ totals[dom] }} circuitos de 2 qubits,
+        simulados em NumPy (vetor de estado). <b>base</b> = um único resultado ·
+        <b>superposição</b> = vários resultados, mas separável · <b>emaranhado</b> = não separável.
+        A pré-anotação é uma heurística sintática ingênua — cuidado com ela!</p>
+      {% endif %}
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><span class="kpi-label">Progresso</span><span class="kpi-value" data-kpi="progress_pct">—</span></div>
+      <div class="kpi"><span class="kpi-label">Acurácia humana (vs gabarito)</span><span class="kpi-value" data-kpi="accuracy_human_vs_gold">—</span></div>
+      <div class="kpi"><span class="kpi-label">Acurácia do modelo (vs gabarito)</span><span class="kpi-value" data-kpi="accuracy_model_vs_gold">—</span></div>
+      <div class="kpi"><span class="kpi-label">κ de Cohen (humano × modelo)</span><span class="kpi-value" data-kpi="kappa_human_vs_model">—</span></div>
+      <div class="kpi"><span class="kpi-label">Correções da pré-anotação</span><span class="kpi-value" data-kpi="corrections">—</span></div>
+      <div class="kpi"><span class="kpi-label">Tempo médio / item</span><span class="kpi-value" data-kpi="avg_seconds">—</span></div>
+    </div>
+
+    <div class="grid">
+      <div class="card annotate-card">
+        <div class="card-head">
+          <h2>Anotar</h2>
+          <span class="position"></span>
+        </div>
+        <div class="item-body"></div>
+        <div class="suggestion"></div>
+        <div class="label-buttons">
+          {% for lab in labels[dom] %}
+          <button class="label-btn" data-label="{{ lab }}"><kbd>{{ loop.index }}</kbd> {{ lab }}</button>
+          {% endfor %}
+        </div>
+        <div class="feedback" aria-live="polite"></div>
+        <div class="actions">
+          <a class="btn-sec" href="/api/{{ dom }}/export.csv">⬇️ Exportar CSV</a>
+          <a class="btn-sec" href="/api/{{ dom }}/export.json">⬇️ Exportar JSON</a>
+          <button class="btn-sec reset">↺ Recomeçar</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Distribuição dos rótulos</h2>
+        <div class="chart-box"><canvas class="chart-dist"></canvas></div>
+      </div>
+
+      {% if dom == 'quantum' %}
+      <div class="card">
+        <h2>Probabilidades de medição (item atual)</h2>
+        <div class="chart-box"><canvas class="chart-probs"></canvas></div>
+      </div>
+      {% endif %}
+
+      <div class="card">
+        <h2>Matriz de confusão <small>(linhas = gabarito · colunas = humano)</small></h2>
+        <div class="confusion"></div>
+      </div>
+    </div>
+  </section>
+  {% endfor %}
+</main>
+
+<footer class="site-footer">
+  <p>Projeto prático de <b>Data Annotation em Python</b> · Flask + NumPy · por
+    <a href="{{ contacts.linkedin[1] }}" target="_blank" rel="noopener">Pedro Paulo Ribeiro</a> —
+    <a href="{{ contacts.site[1] }}" target="_blank" rel="noopener">www.inforpop.com</a></p>
+</footer>
+
+<script>window.LABELS = {{ labels | tojson }};</script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
